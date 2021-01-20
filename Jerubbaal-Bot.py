@@ -1,10 +1,14 @@
 import discord
 from discord.ext import commands
-import time
+import asyncio
+from mutagen.mp3 import MP3
+import mutagen
+import math
+import os
 
-TOKEN = ""
+TOKEN_NAME = "JERUBBAAL_TOKEN"
 
-PREFIX = "jerobaal"
+PREFIX = "jerubbaal"
 
 PLAY_AUDIO_FILES = {"ttsing": r"C:\Users\royat\Desktop\ttsing.mp3",
                     "moyal": r"E:\Downloads\moyal.mp3",
@@ -14,8 +18,6 @@ PLAY_AUDIO_FILES = {"ttsing": r"C:\Users\royat\Desktop\ttsing.mp3",
                     "bruh": r"D:\Downloads\Bruh Sound Effect #2.mp3"}
 
 bot = commands.Bot(command_prefix=f"{PREFIX} ")
-
-HELP_CMD = "tambal"
 
 
 def error_str(err):
@@ -27,12 +29,10 @@ class Jerobaal(commands.Cog):
         self.bot = cog_bot
         self._last_member = None
         self.voice_client = None
-        self.repeat_num = 0
-        self.audio_file = None
 
     @commands.command()
     async def hello(self, ctx):
-        await ctx.message.reply("שלום וברוכים הבאים למרכז השירות של צהל")
+        await ctx.message.reply("זרע עלמק?")
 
     @commands.command()
     async def join(self, ctx):
@@ -67,40 +67,36 @@ class Jerobaal(commands.Cog):
                 list_str += f"\t- {audio_file}\n"
             await ctx.message.reply(list_str + "\n")
             return
-        if audio not in PLAY_AUDIO_FILES.keys():
+        if audio not in PLAY_AUDIO_FILES.keys() or not os.path.isfile(PLAY_AUDIO_FILES[audio]):
             raise commands.BadArgument
 
-        if ctx.guild.voice_client is None or ctx.guild.get_member(ctx.bot.user.id).voice is None or \
-                ctx.guild.get_member(ctx.bot.user.id).voice.channel is None:
+        if ctx.guild.voice_client is None and (ctx.guild.get_member(ctx.bot.user.id).voice is None or
+                                               ctx.guild.get_member(ctx.bot.user.id).voice.channel is None):
             await channel.connect()
 
-        self.repeat_num = repeat
-        self.audio_file = audio
-        self.actual_play_audio(None)
-        ctx.guild.voice_client.play(discord.FFmpegPCMAudio(PLAY_AUDIO_FILES[self.audio_file]),
-                                    after=self.actual_play_audio)
-        # await ctx.guild.voice_client.disconnect()
+        length = math.ceil(MP3(PLAY_AUDIO_FILES[audio]).info.length)
+        for _ in range(repeat):
+            ctx.guild.voice_client.play(discord.FFmpegPCMAudio(PLAY_AUDIO_FILES[audio]), after=self.actual_play_audio)
+            await asyncio.sleep(length)
+        await ctx.guild.voice_client.disconnect()
 
-    def actual_play_audio(self, error):
-        return
+    @staticmethod
+    def actual_play_audio(error):
         if error is not None:
             print(error)
-        if self.repeat_num == 0:
-            return -1
-        self.repeat_num -= 1
 
     @play_audio.error
     async def play_audio_error(self, ctx, error):
-        usage = "Usage: jerobaal playaudio [audio (or list)] <repeat amount>"
         if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.message.reply(error_str("missing audio file!\n" + usage))
+            await ctx.message.reply(error_str("missing audio file!"))
         elif isinstance(error, commands.BadArgument):
-            await ctx.message.reply(error_str("file doesn't exist\n" + usage))
+            await ctx.message.reply(error_str("file doesn't exist"))
         elif isinstance(error, commands.ChannelNotFound):
-            print("no channel")
             await ctx.message.reply(error_str("you must be in a voice channel in order to run this command"))
         else:
             print(error)
+            if ctx.guild.voice_client is not None:
+                ctx.guild.voice_client.disconnect()
 
     @commands.command()
     async def clear(self, ctx, limit: int):
@@ -132,15 +128,17 @@ class Jerobaal(commands.Cog):
     #     await msg.reply(HELP_CMD)
 
 
-tokens = open("tokens.txt", "r")
+tokens = open(r"..\tokens.txt", "r")
+token = ""
 for line in tokens.readlines():
     splitted = line.split('=')
-    if splitted[0] == "JERUBBAAL_TOKEN":
-        TOKEN = splitted[1]
-if TOKEN == "":
+    if splitted[0] == TOKEN_NAME:
+        token = splitted[1]
+if token == "":
+    print("File tokens.txt not found!")
     exit(1)
 
 
 bot.add_cog(Jerobaal(bot))
 bot.intents.all()
-bot.run(TOKEN)
+bot.run(token)
