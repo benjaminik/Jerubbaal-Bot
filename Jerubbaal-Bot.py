@@ -3,9 +3,6 @@ from discord.ext import commands
 import time
 
 TOKEN = ""
-#TOKEN = "fjxvcCItq-przRba2gdu_F1FeDbbis6T"
-#MEITAV_TOKEN = 'NjkwMjI0MTYwMjQ4NjkyNzYw.XnOd7g.YAwytPJ6Y40T5OUgtgZgD5sNvC8'
-#YEROBAAL_TOKEN = 'ODAwNDYxNTA2OTQwMTA4ODUw.YASd3w.J2Yow1a6y90Yu6Fa_p0MwzrCPIk'
 
 PREFIX = "jerobaal"
 
