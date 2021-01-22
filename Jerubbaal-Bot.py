@@ -4,6 +4,7 @@ import asyncio
 from mutagen.mp3 import MP3
 from mutagen.mp4 import MP4
 from mutagen.wave import WAVE
+import mutagen
 import math
 import os
 import random
@@ -20,6 +21,7 @@ PLAY_AUDIO_FILES = {"alabama": PLAY_AUDIO_PATH + r"alabama.m4a",
                     "imgood": PLAY_AUDIO_PATH + r"I’m Good Bruh You Geekin Bruh (192 kbps).mp3",
                     "moyal": PLAY_AUDIO_PATH + r"moyal.mp3",
                     "moyal2": PLAY_AUDIO_PATH + r"moyal2.mp3",
+                    "moyal3": PLAY_AUDIO_PATH + r"moyal3.mp3",
                     "moyalrap": PLAY_AUDIO_PATH + r"moyal_rap.m4a",
                     "shira": PLAY_AUDIO_PATH + r"shira.mp3",
                     "stepbro": PLAY_AUDIO_PATH + r"stepbro.mp3",
@@ -29,7 +31,8 @@ PLAY_AUDIO_FILES = {"alabama": PLAY_AUDIO_PATH + r"alabama.m4a",
 SEND_FILE_PATH = r"..\files" + "\\"
 SEND_FILE_FILES = {"ariel": SEND_FILE_PATH + r"ariel.png"}
 
-bot = commands.Bot(command_prefix=(f"jerubbaal ", "j "))
+bot = commands.Bot(command_prefix=(f"jerubbaal ", "j "), intents=discord.Intents.all())
+bot.remove_command("help")
 
 
 def error_str(err):
@@ -39,11 +42,11 @@ def error_str(err):
 def audio_len(file):
     ret = 0
     if file.lower().endswith("mp3"):
-        ret = math.ceil(MP3(file).info.length)
+        ret = math.ceil(mutagen.mp3.MP3(file).info.length)
     if file.lower().endswith("mp4") or file.lower().endswith("m4a"):
-        ret = math.ceil(MP4(file).info.length)
+        ret = math.ceil(mutagen.mp4.MP4(file).info.length)
     if file.lower().endswith("wav"):
-        ret = math.ceil(WAVE(file).info.length)
+        ret = math.ceil(mutagen.wave.WAVE(file).info.length)
     return ret
 
 
@@ -51,7 +54,7 @@ class Jerubbaal(commands.Cog):
     def __init__(self, cog_bot):
         self.bot = cog_bot
         self._last_member = None
-        self.voice_client = None
+        self.members_kicked = {}
         self.playing = False
 
     @commands.command()
@@ -62,7 +65,7 @@ class Jerubbaal(commands.Cog):
     async def join(self, ctx):
         voice_channel = ctx.author.voice.channel
         if voice_channel is not None:
-            self.voice_client = await voice_channel.connect()
+            await voice_channel.connect()
 
     @commands.command(aliases=["gn"])
     async def goodnight(self, ctx):
@@ -72,6 +75,7 @@ class Jerubbaal(commands.Cog):
         if len(vc_members) == 0:
             for k in ctx.author.voice.channel.voice_states.keys():
                 vc_members.append(await ctx.guild.fetch_member(k))
+        print([members.name for members in vc_members])
         for mem in vc_members:
             if mem is None:
                 continue
@@ -185,7 +189,7 @@ class Jerubbaal(commands.Cog):
     @commands.command(name="sendfile", aliases=["sf"])
     async def send_file(self, ctx, file):
         if file == "list":
-            list_str = "Available sounds:\n"
+            list_str = "Available file:\n"
             for sf_file in SEND_FILE_FILES.keys():
                 list_str += f"\t- {sf_file}\n"
             await ctx.message.reply(list_str + "\n")
@@ -198,13 +202,48 @@ class Jerubbaal(commands.Cog):
 
     @send_file.error
     async def send_file_error(self, ctx, error):
-        print(type(error))
-        print(error)
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.message.reply(error_str("missing file!"))
+        else:
+            print(type(error))
+            print(error)
+
+    @commands.command()
+    async def kick(self, ctx, member: discord.Member):
+        roles = member.roles
+        nick = member.nick
+        self.members_kicked[(member.id, ctx.guild.id)] = (nick, roles[1:])
+        inv = await ctx.guild.text_channels[0].create_invite()
+        await member.send(content=f"Sorry for kick bro, come back {inv.url}")
+        await ctx.guild.kick(member)
+
+    @kick.error
+    async def kick_error(self, ctx, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.message.reply(error_str("missing target!"))
+        elif isinstance(error, commands.MemberNotFound):
+            await ctx.message.reply(error_str("memeber not found"))
+        else:
+            print(type(error))
+            print(error)
+
+    # @commands.Cog.listener()
+    # async def on_command_error(self, ctx, error):
+    #     print(type(error))
+    #     print(error)
+
+    @commands.command()
+    async def help(self, ctx):
+        await ctx.send("gay")
 
     @commands.Cog.listener()
-    async def on_command_error(self, ctx, error):
-        print(type(error))
-        print(error)
+    async def on_member_join(self, member):
+        if (member.id, member.guild.id) not in self.members_kicked.keys():
+            return
+        nick, roles = self.members_kicked[(member.id, member.guild.id)]
+        await member.add_roles(*roles)
+        await member.edit(nick=nick)
+        self.members_kicked.pop((member.id, member.guild.id))
 
     @commands.Cog.listener()
     async def on_connect(self):
@@ -224,5 +263,4 @@ if token == "":
 jerubbaal_cog = Jerubbaal(bot)
 bot.add_cog(jerubbaal_cog)
 print([cmd.name for cmd in jerubbaal_cog.get_commands()])
-bot.intents.all()
 bot.run(token)
