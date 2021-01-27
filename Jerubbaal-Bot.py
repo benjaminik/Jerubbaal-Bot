@@ -210,11 +210,14 @@ class Jerubbaal(commands.Cog):
 
     @commands.command()
     async def kick(self, ctx, member: discord.Member):
+        if not ctx.author.guild_permissions.kick_members:
+            await ctx.message.reply(error_str("you don't have permission!"))
+            return
         roles = member.roles
         nick = member.nick
         self.members_kicked[(member.id, ctx.guild.id)] = (nick, roles[1:])
-        inv = await ctx.guild.text_channels[0].create_invite()
-        await member.send(content=f"Sorry for kick bro, come back {inv.url}")
+        inv = await ctx.guild.text_channels[0].create_invite(max_uses=1)
+        await member.send(content=f"Apparently, {ctx.author.name} kicked you. Come back through here: {inv.url}")
         await ctx.guild.kick(member)
 
     @kick.error
