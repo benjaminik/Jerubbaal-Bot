@@ -9,6 +9,7 @@ import math
 import os
 import random
 import requests
+import json
 
 TOKEN_NAME = "JERUBBAAL_TOKEN"
 
@@ -35,6 +36,7 @@ PLAY_AUDIO_PATH = r"https://drive.google.com/uc?export=download&id="
 PLAY_AUDIO_FILES = {"alabama": PLAY_AUDIO_PATH + r"1Szlw3aQWPFzAc4EXjoDc1ZIARqtLFbj1",
                     "bruh": PLAY_AUDIO_PATH + r"1CPnEc0_8P4yNbLacQHz7OLNPKqmyVUlW",
                     "cohen": PLAY_AUDIO_PATH + r"1DQALe7QpigJzeN6nFLnwJQsu2QFu9m0w",
+                    "chupapi": PLAY_AUDIO_PATH + r"1oFRB0mk9ixb2LmcbEFlsCUSwbSc5sIEt",
                     "dayan": PLAY_AUDIO_PATH + r"1TSBrK3EL1aUQZeQif4TWKspwhgoLnqyI",
                     "globglib": PLAY_AUDIO_PATH + r"1_9Em5QiOk6P3hQnrvsZfaUHqW_OfrORc",
                     "hellnaw": PLAY_AUDIO_PATH + r"11410Nl1lghF2XpA51fhsiYjwaM31CxZ3",
@@ -47,6 +49,7 @@ PLAY_AUDIO_FILES = {"alabama": PLAY_AUDIO_PATH + r"1Szlw3aQWPFzAc4EXjoDc1ZIARqtL
                     "munyanyu": PLAY_AUDIO_PATH + r"1qYdWwqfrk3MAmFeYc_fwspWRH10p2KfN",
                     "purim": PLAY_AUDIO_PATH + r"1Wyrk7CqD0CszcjnazKCAwX2b7z-go4Pa",
                     "shira": PLAY_AUDIO_PATH + r"1bn6s4VT5AtSDuunOxIc5uH1_JiwOlFuD",
+                    "shonogen": PLAY_AUDIO_PATH + r"1yLofhA4pgNGzjvUtXzErwv5lj7E9aPcG",
                     "stepbro": PLAY_AUDIO_PATH + r"1fGk_Dg7KqCuzEsI1VcpLO7vCriB1eIKP",
                     "ttsing": PLAY_AUDIO_PATH + r"16PZRpUlThMwjQBkVYWSl79VwCRbetAf7",
                     "wontdefeat": PLAY_AUDIO_PATH + r"1onzsBINx1cyC2E-IP2PpykPsU5bpsAGm"}
@@ -77,21 +80,12 @@ class Jerubbaal(commands.Cog):
     def __init__(self, cog_bot):
         self.bot = cog_bot
         self._last_member = None
-        self.members_kicked = {}
         self.playing = False
         self.audio = None
+        self.aliases = {}
+        self.members_kicked = {}
 
-    @commands.command()
-    async def hello(self, ctx):
-        await ctx.message.reply("זרע עלמק?")
-
-    @commands.command()
-    async def join(self, ctx):
-        voice_channel = ctx.author.voice.channel
-        if voice_channel is not None:
-            await voice_channel.connect()
-
-    @commands.command(aliases=["gn"])
+    @commands.command(aliases=["gn"], help="Disconnects everyone from your channel simultaneously")
     async def goodnight(self, ctx):
         if ctx.author.voice is None or ctx.author.voice.channel is None:
             await ctx.send("You must be in a voice channel in order to run this command")
@@ -104,9 +98,10 @@ class Jerubbaal(commands.Cog):
             if mem is None:
                 continue
             await mem.edit(voice_channel=None)
+        await ctx.message.add_reaction("😴")
 
-    @commands.command(aliases=["pa", "play"], help="Play an audio from predetemined list",
-                      name="playaudio")
+    @commands.command(aliases=["pa", "play"], help="Plays an audio from a predetemined list",
+                      name="playaudio", usage="<sound> [repeat]")
     async def play_audio(self, ctx, audio, repeat=1):
         channel = ctx.author.voice
         if channel is None or channel.channel is None:
@@ -156,6 +151,7 @@ class Jerubbaal(commands.Cog):
         self.playing = False
         if ctx.guild.voice_client is not None:
             await ctx.guild.voice_client.disconnect()
+        await ctx.message.add_reaction("👍🏻")
 
     @play_audio.error
     async def play_audio_error(self, ctx, error):
@@ -171,13 +167,14 @@ class Jerubbaal(commands.Cog):
                 os.remove(self.audio + ".mp3")
                 self.audio = None
 
-    @commands.command()
+    @commands.command(usage="<amount>", help="Clears the last <amount> messages")
     async def clear(self, ctx, limit: int):
         if limit > 100 or limit < 1:
             await ctx.message.reply(error_str("amount must be an integer between 1 and 100"))
             return
         await ctx.channel.purge(limit=limit+1, check=lambda msg: msg != ctx.message)
-        await ctx.send(f"Cleared {limit} messages!")
+        # await ctx.send(f"Cleared {limit} messages!")
+        await ctx.message.add_reaction("👍🏻")
 
     @clear.error
     async def clear_error(self, ctx, error):
@@ -188,7 +185,7 @@ class Jerubbaal(commands.Cog):
         else:
             print(error)
 
-    @commands.command(alias=["undeafen", "ud"])
+    @commands.command(alias=["undeafen", "ud"], usage="<member>", help="Move the player around 8 times")
     async def undeaf(self, ctx, member: discord.Member):
         if member.voice is None or member.voice.channel is None:
             await ctx.message.reply(error_str("target not in a channel"))
@@ -217,6 +214,7 @@ class Jerubbaal(commands.Cog):
                 break
         if member.voice is not None and member.voice.channel is not None:
             await member.edit(voice_channel=orig_channel)
+        await ctx.message.add_reaction("👍🏻")
 
     @undeaf.error
     async def undeaf_error(self, ctx, error):
@@ -226,7 +224,7 @@ class Jerubbaal(commands.Cog):
             print(type(error))
             print(error)
 
-    @commands.command(name="sendfile", aliases=["sf"])
+    @commands.command(name="sendfile", aliases=["sf"], usage="<file>", help="Sends a file from a predetemined list")
     async def send_file(self, ctx, file):
         if file == "list":
             list_str = "Available file:\n"
@@ -239,6 +237,7 @@ class Jerubbaal(commands.Cog):
             return
 
         await ctx.send(file=discord.File(SEND_FILE_FILES[file]))
+        await ctx.message.add_reaction("👍🏻")
 
     @send_file.error
     async def send_file_error(self, ctx, error):
@@ -248,7 +247,8 @@ class Jerubbaal(commands.Cog):
             print(type(error))
             print(error)
 
-    @commands.command()
+    @commands.command(usage="<member>", help="Kicks a member, send them (privately) an invite link, and when they "
+                                             "return their roles and nickname will be as of before the kick")
     async def kick(self, ctx, member: discord.Member):
         if not ctx.author.guild_permissions.kick_members:
             await ctx.message.reply(error_str("you don't have permission!"))
@@ -259,9 +259,12 @@ class Jerubbaal(commands.Cog):
         roles = member.roles
         nick = member.nick
         self.members_kicked[(member.id, ctx.guild.id)] = (nick, roles[1:])
+        with open("..\\guilddata\\kicked_" + str(ctx.guild.id) + ".txt", "w") as f:
+            f.write(json.dumps(self.members_kicked))
         inv = await ctx.guild.text_channels[0].create_invite(max_uses=1)
         await member.send(content=f"Apparently, {ctx.author.name} kicked you. Come back through here: {inv.url}")
         await ctx.guild.kick(member)
+        await ctx.message.add_reaction("👍🏻")
 
     @kick.error
     async def kick_error(self, ctx, error):
@@ -273,18 +276,73 @@ class Jerubbaal(commands.Cog):
             print(type(error))
             print(error)
 
-    @commands.command()
-    async def munyanyu(self, ctx):
-        await self.play_audio(ctx, "munyanyu")
+    @commands.command(usage="[length] <alias> <command>", help="Adds an alias to a command. Length defaults to 1. "
+                                                               "To list the aliases, supply no arguments")
+    async def alias(self, ctx, *args):
+        if os.path.exists("..\\guilddata\\aliases_" + str(ctx.guild.id) + ".txt"):
+            with open("..\\guilddata\\aliases_" + str(ctx.guild.id) + ".txt", "r") as f:
+                self.aliases = json.loads(f.read())
+        if len(args) == 0:
+            msg = ""
+            if len(self.aliases) == 0:
+                msg += "\tThere are no aliases on this server!"
+            else:
+                msg = "Available aliases for this server:\n"
+                for alias, value in self.aliases.items():
+                    msg += f"\t- {alias}: {value}\n"
+            await ctx.message.reply(msg)
+            return
+        len_alias = 1
+        start = 0
+        if args[0].isdigit():
+            len_alias = int(args[start])
+            start += 1
+        if len(args) < start + len_alias + 2:
+            await ctx.message.reply(error_str("your alias is not long enough"))
+            return
+        self.aliases[" ".join(args[start:start+len_alias])] = " ".join(args[start+len_alias:])
+        with open("..\\guilddata\\aliases_" + str(ctx.guild.id) + ".txt", "w") as f:
+            f.write(json.dumps(self.aliases))
+        await ctx.message.add_reaction("👍🏻")
 
-    # @commands.Cog.listener()
-    # async def on_command_error(self, ctx, error):
-    #     print(type(error))
-    #     print(error)
+    @commands.command(usage="<alias>", help="Delete an alias")
+    async def delalias(self, ctx, *args):
+        if os.path.exists("..\\guilddata\\aliases_" + str(ctx.guild.id) + ".txt"):
+            with open("..\\guilddata\\aliases_" + str(ctx.guild.id) + ".txt", "r") as f:
+                self.aliases = json.loads(f.read())
+        if " ".join(args) not in self.aliases.keys():
+            await ctx.message.reply(error_str("alias doesn't exist"))
+        self.aliases.pop(" ".join(args))
+        with open("..\\guilddata\\aliases_" + str(ctx.guild.id) + ".txt", "w") as f:
+            f.write(json.dumps(self.aliases))
+        await ctx.message.add_reaction("👍🏻")
 
-    @commands.command()
+    @commands.Cog.listener()
+    async def on_command_error(self, ctx, error):
+        if isinstance(error, commands.CommandNotFound):
+            if os.path.exists("..\\guilddata\\aliases_" + str(ctx.guild.id) + ".txt"):
+                with open("..\\guilddata\\aliases_" + str(ctx.guild.id) + ".txt", "r") as f:
+                    self.aliases = json.loads(f.read())
+            args = ctx.message.content.split(" ")[1:]
+            if " ".join(args) in self.aliases.keys():
+                ctx.message.content = self.aliases[" ".join(args)]
+                await self.bot.process_commands(ctx.message)
+        else:
+            print(type(error))
+            print(error)
+
+    @commands.command(help="Shows this message")
     async def help(self, ctx):
-        await ctx.send("gay")
+        msg = "Available commands:\n"
+        for cmd in sorted(jerubbaal_cog.get_commands(), key=lambda c: c.name):
+            msg += "\t" + cmd.name
+            if len(cmd.aliases) != 0:
+                msg += "(/" + "/".join(cmd.aliases) + ")"
+            if cmd.usage is not None:
+                msg += " " + str(cmd.usage)
+            msg += " - " + str(cmd.help)
+            msg += "\n"
+        await ctx.message.reply(msg)
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
@@ -293,6 +351,8 @@ class Jerubbaal(commands.Cog):
             await member.add_roles(*roles)
             await member.edit(nick=nick)
             self.members_kicked.pop((member.id, member.guild.id))
+            with open("..\\guilddata\\kicked_" + str(member.guild.id) + ".txt", "w") as f:
+                f.write(json.dumps(self.members_kicked))
 
     @commands.Cog.listener()
     async def on_connect(self):
@@ -311,5 +371,4 @@ if token == "":
 
 jerubbaal_cog = Jerubbaal(bot)
 bot.add_cog(jerubbaal_cog)
-print([cmd.name for cmd in jerubbaal_cog.get_commands()])
 bot.run(token)
