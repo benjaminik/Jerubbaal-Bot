@@ -8,30 +8,53 @@ import mutagen
 import math
 import os
 import random
+import requests
 
 TOKEN_NAME = "JERUBBAAL_TOKEN"
 
-PLAY_AUDIO_PATH = r"..\audio" + "\\"
-PLAY_AUDIO_FILES = {"alabama": PLAY_AUDIO_PATH + r"alabama.m4a",
-                    "bruh": PLAY_AUDIO_PATH + r"Bruh Sound Effect #2.mp3",
-                    "cohen": PLAY_AUDIO_PATH + r"cohen.m4a",
-                    "dayan": PLAY_AUDIO_PATH + r"dayan.mp3",
-                    "globglib": PLAY_AUDIO_PATH + r"globglib.mp3",
-                    "hellnaw": PLAY_AUDIO_PATH + r"Oh Hell No #VINE.mp3",
-                    "imgood": PLAY_AUDIO_PATH + r"I’m Good Bruh You Geekin Bruh (192 kbps).mp3",
-                    "moyal": PLAY_AUDIO_PATH + r"moyal.mp3",
-                    "moyal2": PLAY_AUDIO_PATH + r"moyal2.mp3",
-                    "moyal3": PLAY_AUDIO_PATH + r"moyal3.mp3",
-                    "moyalrap": PLAY_AUDIO_PATH + r"moyal_rap.m4a",
-                    "shira": PLAY_AUDIO_PATH + r"shira.mp3",
-                    "stepbro": PLAY_AUDIO_PATH + r"stepbro.mp3",
-                    "ttsing": PLAY_AUDIO_PATH + r"ttsing.mp3",
-                    "wontdefeat": PLAY_AUDIO_PATH + r"musc.wav"}
+# PLAY_AUDIO_PATH = r"..\audio" + "\\"
+# PLAY_AUDIO_FILES = {"alabama": PLAY_AUDIO_PATH + r"alabama.mp3",
+#                     "bruh": PLAY_AUDIO_PATH + r"Bruh Sound Effect #2.mp3",
+#                     "cohen": PLAY_AUDIO_PATH + r"cohen.m4a",
+#                     "dayan": PLAY_AUDIO_PATH + r"dayan.mp3",
+#                     "globglib": PLAY_AUDIO_PATH + r"globglib.mp3",
+#                     "hellnaw": PLAY_AUDIO_PATH + r"Oh Hell No #VINE.mp3",
+#                     "heysisters": PLAY_AUDIO_PATH + r"heysisters.mp3",
+#                     "imgood": PLAY_AUDIO_PATH + r"I’m Good Bruh You Geekin Bruh (192 kbps).mp3",
+#                     "moyal": PLAY_AUDIO_PATH + r"moyal.mp3",
+#                     "moyal2": PLAY_AUDIO_PATH + r"moyal2.mp3",
+#                     "moyal3": PLAY_AUDIO_PATH + r"moyal3.mp3",
+#                     "moyalrap": PLAY_AUDIO_PATH + r"moyal_rap.m4a",
+#                     "purim": PLAY_AUDIO_PATH + r"purim.mp3",
+#                     "shira": PLAY_AUDIO_PATH + r"shira.mp3",
+#                     "stepbro": PLAY_AUDIO_PATH + r"stepbro.mp3",
+#                     "ttsing": PLAY_AUDIO_PATH + r"ttsing.mp3",
+#                     "wontdefeat": PLAY_AUDIO_PATH + r"musc.wav"}
+DEFAULT_CURRENTSONG = "song.mp3"
+PLAY_AUDIO_PATH = r"https://drive.google.com/uc?export=download&id="
+PLAY_AUDIO_FILES = {"alabama": PLAY_AUDIO_PATH + r"1Szlw3aQWPFzAc4EXjoDc1ZIARqtLFbj1",
+                    "bruh": PLAY_AUDIO_PATH + r"1CPnEc0_8P4yNbLacQHz7OLNPKqmyVUlW",
+                    "cohen": PLAY_AUDIO_PATH + r"1DQALe7QpigJzeN6nFLnwJQsu2QFu9m0w",
+                    "dayan": PLAY_AUDIO_PATH + r"1TSBrK3EL1aUQZeQif4TWKspwhgoLnqyI",
+                    "globglib": PLAY_AUDIO_PATH + r"1_9Em5QiOk6P3hQnrvsZfaUHqW_OfrORc",
+                    "hellnaw": PLAY_AUDIO_PATH + r"11410Nl1lghF2XpA51fhsiYjwaM31CxZ3",
+                    "heysisters": PLAY_AUDIO_PATH + r"18NxjwyaTsixirWkpmizCS_sRfYEe_EvE",
+                    "imgood": PLAY_AUDIO_PATH + r"1bIPGLBukEylJW-vOvNlIn-XHCVq9mFMT",
+                    "moyal": PLAY_AUDIO_PATH + r"18fmO5glKSUbSbwX1kDLjWf216wPu6FiO",
+                    "moyal2": PLAY_AUDIO_PATH + r"1oYslu8Ig27jq2bRQQMk1KjLdMIVn_aJq",
+                    "moyal3": PLAY_AUDIO_PATH + r"1m8CsGICX2IQ91uqDQbdDdep6Oe_RhH2b",
+                    "moyalrap": PLAY_AUDIO_PATH + r"1ubqLkIJxsmQxeQMl3cA9o6V62iUkkXXF",
+                    "munyanyu": PLAY_AUDIO_PATH + r"1qYdWwqfrk3MAmFeYc_fwspWRH10p2KfN",
+                    "purim": PLAY_AUDIO_PATH + r"1Wyrk7CqD0CszcjnazKCAwX2b7z-go4Pa",
+                    "shira": PLAY_AUDIO_PATH + r"1bn6s4VT5AtSDuunOxIc5uH1_JiwOlFuD",
+                    "stepbro": PLAY_AUDIO_PATH + r"1fGk_Dg7KqCuzEsI1VcpLO7vCriB1eIKP",
+                    "ttsing": PLAY_AUDIO_PATH + r"16PZRpUlThMwjQBkVYWSl79VwCRbetAf7",
+                    "wontdefeat": PLAY_AUDIO_PATH + r"1onzsBINx1cyC2E-IP2PpykPsU5bpsAGm"}
 
 SEND_FILE_PATH = r"..\files" + "\\"
 SEND_FILE_FILES = {"ariel": SEND_FILE_PATH + r"ariel.png"}
 
-bot = commands.Bot(command_prefix=(f"jerubbaal ", "j "), intents=discord.Intents.all())
+bot = commands.Bot(command_prefix=(f"jerubbaal ", "j ", "chupapi "), intents=discord.Intents.all())
 bot.remove_command("help")
 
 
@@ -56,6 +79,7 @@ class Jerubbaal(commands.Cog):
         self._last_member = None
         self.members_kicked = {}
         self.playing = False
+        self.audio = None
 
     @commands.command()
     async def hello(self, ctx):
@@ -81,7 +105,7 @@ class Jerubbaal(commands.Cog):
                 continue
             await mem.edit(voice_channel=None)
 
-    @commands.command(aliases=["pa"], help="Play an audio from predetemined list",
+    @commands.command(aliases=["pa", "play"], help="Play an audio from predetemined list",
                       name="playaudio")
     async def play_audio(self, ctx, audio, repeat=1):
         channel = ctx.author.voice
@@ -97,10 +121,17 @@ class Jerubbaal(commands.Cog):
             return
         if audio == "stop":
             if ctx.guild.voice_client is not None:
+                ctx.guild.voice_client.stop()
                 await ctx.guild.voice_client.disconnect()
+            while os.path.isfile(self.audio + ".mp3"):
+                try:
+                    os.remove(self.audio + ".mp3")
+                except PermissionError:
+                    continue
+            self.audio = None
             self.playing = False
             return
-        if audio not in PLAY_AUDIO_FILES.keys() or not os.path.isfile(PLAY_AUDIO_FILES[audio]):
+        if audio not in PLAY_AUDIO_FILES.keys():
             await ctx.message.reply(error_str("file doesn't exist"))
             return
 
@@ -111,11 +142,17 @@ class Jerubbaal(commands.Cog):
                                                ctx.guild.get_member(ctx.bot.user.id).voice.channel is None):
             await channel.connect()
 
-        length = audio_len(PLAY_AUDIO_FILES[audio])
+        self.audio = audio
+        with open(audio + ".mp3", "wb") as f:
+            f.write(requests.get(PLAY_AUDIO_FILES[audio]).content)
+        length = audio_len(audio + ".mp3")
         for _ in range(repeat):
-            ctx.guild.voice_client.play(discord.FFmpegPCMAudio(PLAY_AUDIO_FILES[audio]))
+            # ctx.guild.voice_client.play(discord.FFmpegPCMAudio(PLAY_AUDIO_FILES[audio]))
+            ctx.guild.voice_client.play(discord.FFmpegPCMAudio(audio + ".mp3"))
             self.playing = True
             await asyncio.sleep(length)
+        os.remove(self.audio + ".mp3")
+        self.audio = None
         self.playing = False
         if ctx.guild.voice_client is not None:
             await ctx.guild.voice_client.disconnect()
@@ -130,6 +167,9 @@ class Jerubbaal(commands.Cog):
             print(ctx)
             if ctx.guild.voice_client is not None:
                 await ctx.guild.voice_client.disconnect()
+            if os.path.isfile(self.audio + ".mp3"):
+                os.remove(self.audio + ".mp3")
+                self.audio = None
 
     @commands.command()
     async def clear(self, ctx, limit: int):
@@ -213,6 +253,9 @@ class Jerubbaal(commands.Cog):
         if not ctx.author.guild_permissions.kick_members:
             await ctx.message.reply(error_str("you don't have permission!"))
             return
+        if member.status != discord.Status.online:
+            await ctx.message.reply(error_str("member must be online!"))
+            return
         roles = member.roles
         nick = member.nick
         self.members_kicked[(member.id, ctx.guild.id)] = (nick, roles[1:])
@@ -230,6 +273,10 @@ class Jerubbaal(commands.Cog):
             print(type(error))
             print(error)
 
+    @commands.command()
+    async def munyanyu(self, ctx):
+        await self.play_audio(ctx, "munyanyu")
+
     # @commands.Cog.listener()
     # async def on_command_error(self, ctx, error):
     #     print(type(error))
@@ -241,12 +288,11 @@ class Jerubbaal(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        if (member.id, member.guild.id) not in self.members_kicked.keys():
-            return
-        nick, roles = self.members_kicked[(member.id, member.guild.id)]
-        await member.add_roles(*roles)
-        await member.edit(nick=nick)
-        self.members_kicked.pop((member.id, member.guild.id))
+        if (member.id, member.guild.id) in self.members_kicked.keys():
+            nick, roles = self.members_kicked[(member.id, member.guild.id)]
+            await member.add_roles(*roles)
+            await member.edit(nick=nick)
+            self.members_kicked.pop((member.id, member.guild.id))
 
     @commands.Cog.listener()
     async def on_connect(self):
