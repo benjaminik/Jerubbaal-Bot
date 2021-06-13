@@ -121,7 +121,7 @@ class Jerubbaal(commands.Cog):
             await mem.edit(voice_channel=None)
         await ctx.message.add_reaction("😴")
 
-    @commands.command(aliases=["pc"], help="Creates a private channel just for you and who you tagged!")
+    @commands.command(aliases=["pc"], usage="[<members>,...]", help="Creates a private channel just for you and who you tagged!")
     async def privatechannel(self, ctx, *members: discord.Member):
         if len(members) == 0:
             raise commands.MissingRequiredArgument(inspect.Parameter("member", inspect.Parameter.POSITIONAL_ONLY))
@@ -387,13 +387,13 @@ class Jerubbaal(commands.Cog):
     async def help(self, ctx):
         msg = "Available commands:\n"
         for cmd in sorted(jerubbaal_cog.get_commands(), key=lambda c: c.name):
-            msg += "\t" + cmd.name
+            msg += f"\t**{cmd.name}"
             if len(cmd.aliases) != 0:
                 msg += "(/" + "/".join(cmd.aliases) + ")"
+            msg += "**"
             if cmd.usage is not None:
-                msg += " " + str(cmd.usage)
-            msg += " - " + str(cmd.help)
-            msg += "\n"
+                msg += f" *{str(cmd.usage)}*"
+            msg += f" - {str(cmd.help)}\n"
         await ctx.message.reply(msg)
 
     @commands.Cog.listener()
