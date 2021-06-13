@@ -121,11 +121,13 @@ class Jerubbaal(commands.Cog):
             await mem.edit(voice_channel=None)
         await ctx.message.add_reaction("😴")
 
-    @commands.command(aliases=["pc"], usage="[<members>,...]", help="Creates a private channel just for you and who you tagged!")
+    @commands.command(aliases=["pc"], usage="[<members>,...]",
+                      help="Creates a private channel just for you and who you tagged!")
     async def privatechannel(self, ctx, *members: discord.Member):
         if len(members) == 0:
             raise commands.MissingRequiredArgument(inspect.Parameter("member", inspect.Parameter.POSITIONAL_ONLY))
-        overwrites = {ctx.guild.default_role: discord.PermissionOverwrite(view_channel=False)}
+        overwrites = {ctx.guild.default_role: discord.PermissionOverwrite(view_channel=False),
+                      ctx.author: discord.PermissionOverwrite(view_channel=True)}
         for member in members:
             overwrites[member] = discord.PermissionOverwrite(view_channel=True)
         channel_name = f"{ctx.author.nick}'s private channel"
